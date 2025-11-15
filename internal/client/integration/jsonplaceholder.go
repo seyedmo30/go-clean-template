@@ -6,9 +6,11 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"strconv"
 
 	"__MODULE__/internal/config"
 	"__MODULE__/internal/dto/client/integration"
+	"__MODULE__/internal/entity/user"
 	"__MODULE__/internal/interfaces"
 )
 
@@ -57,12 +59,12 @@ func (j *jsonPlaceholderService) GetUsers(ctx context.Context, page int) (integr
 	users := make([]integration.UserDTO, 0, len(parsed))
 	for _, u := range parsed {
 		users = append(users, integration.UserDTO{
-			ID:       fmt.Sprintf("%d", u.ID),
-			Name:     u.Name,
-			Username: u.Username,
-			Email:    u.Email,
-			Phone:    u.Phone,
-			Website:  u.Website,
+			ID:       user.ID(strconv.Itoa(u.ID)),
+			Name:     user.FullName(u.Name),
+			Username: user.Username(u.Username),
+			Email:    user.Email(u.Email),
+			Phone:    user.Phone(u.Phone),
+			Website:  user.Website(u.Website),
 			Extra: map[string]string{
 				"company": u.Company.Name,
 				"city":    u.Address.City,

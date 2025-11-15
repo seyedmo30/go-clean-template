@@ -1,14 +1,18 @@
 package integration
 
+import (
+	"__MODULE__/internal/entity/user"
+)
+
 // Unified DTOs used by the application.
 
 type UserDTO struct {
-	ID       string            `json:"id"`
-	Name     string            `json:"name,omitempty"`
-	Username string            `json:"username,omitempty"`
-	Email    string            `json:"email,omitempty"`
-	Phone    string            `json:"phone,omitempty"`
-	Website  string            `json:"website,omitempty"`
+	ID       user.ID           `json:"id"`
+	Name     user.FullName     `json:"name,omitempty"`
+	Username user.Username     `json:"username,omitempty"`
+	Email    user.Email        `json:"email,omitempty"`
+	Phone    user.Phone        `json:"phone,omitempty"`
+	Website  user.Website      `json:"website,omitempty"`
 	Extra    map[string]string `json:"extra,omitempty"` // provider-specific fields
 }
 

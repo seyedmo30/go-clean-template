@@ -11,6 +11,7 @@ import (
 
 	"__MODULE__/internal/config"
 	"__MODULE__/internal/dto/client/integration"
+	"__MODULE__/internal/entity/user"
 	"__MODULE__/internal/interfaces"
 )
 
@@ -70,9 +71,9 @@ func (r *reqresService) GetUsers(ctx context.Context, page int) (integration.Use
 	users := make([]integration.UserDTO, 0, len(parsed.Data))
 	for _, u := range parsed.Data {
 		users = append(users, integration.UserDTO{
-			ID:    strconv.Itoa(u.ID),
-			Name:  u.FirstName + " " + u.LastName,
-			Email: u.Email,
+			ID:    user.ID(strconv.Itoa(u.ID)),
+			Name:  user.FullName(u.FirstName + " " + u.LastName),
+			Email: user.Email(u.Email),
 			Extra: map[string]string{
 				"avatar": u.Avatar,
 			},
