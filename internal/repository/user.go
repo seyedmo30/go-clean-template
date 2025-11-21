@@ -56,7 +56,7 @@ func (r *serviceRepository) GetUsersList(ctx context.Context, params repository.
 	if err := query.Error; err != nil {
 		if mysqlErr, ok := err.(*mysql.MySQLError); ok {
 			ErrMsg := fmt.Sprintf("%s %d", mysqlErr.Message, mysqlErr.Number)
-			err = pkg.ErrInternalServerError.AddStack().AddDescription(ErrMsg)
+			err = pkg.ErrBadRequest.AddDescription([]byte(ErrMsg))
 			return res, err
 		}
 		return res, r.handleDBErrors(err)
@@ -98,7 +98,8 @@ func (r *serviceRepository) UpdateUser(ctx context.Context, params repository.Up
 		return r.handleDBErrors(err)
 	}
 	if result.RowsAffected == 0 {
-		return pkg.ErrRecordNotFound.AddStack().AddDescription("user not found")
+		// return pkg.ErrRecordNotFound.AddStack().AddDescription("user not found")
+
 	}
 	return nil
 }
@@ -109,13 +110,15 @@ func (r *serviceRepository) DeleteUser(ctx context.Context, id string) error {
 	if err := result.Error; err != nil {
 		if mysqlErr, ok := err.(*mysql.MySQLError); ok {
 			ErrMsg := fmt.Sprintf("%s %d", mysqlErr.Message, mysqlErr.Number)
-			err = pkg.ErrInternalServerError.AddStack().AddDescription(ErrMsg)
+			// err = pkg.ErrInternalServerError.AddStack().AddDescription(ErrMsg)
+			err = pkg.ErrBadRequest.AddDescription([]byte(ErrMsg))
 			return err
 		}
 		return r.handleDBErrors(err)
 	}
 	if result.RowsAffected == 0 {
-		return pkg.ErrRecordNotFound.AddStack().AddDescription("user not found")
+		// return pkg.ErrRecordNotFound.AddStack().AddDescription("user not found")
+
 	}
 	return nil
 }

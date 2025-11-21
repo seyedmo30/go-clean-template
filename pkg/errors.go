@@ -2,24 +2,25 @@ package pkg
 
 import (
 	"bytes"
+	"encoding/json"
 	"os"
 	"strconv"
-
-	"gopkg.in/yaml.v3"
 )
 
 func init() {
-	// Load the error configuration from the YAML file
+	// Load the error configuration from the JSON file
 	err := LoadErrorConfig("errors.json")
 	if err != nil {
 		panic("Failed to load error configuration: " + err.Error())
 	}
 }
 
-var errorConfig map[string]AppError
+var errorConfig map[string]*AppError
 
 var (
 	ErrBadRequest *AppError
+	ErrNotFound   *AppError
+	// TODO some common error
 )
 
 func LoadErrorConfig(filePath string) error {
@@ -27,7 +28,8 @@ func LoadErrorConfig(filePath string) error {
 	if err != nil {
 		return err
 	}
-	err = yaml.Unmarshal(data, &errorConfig)
+	// unmarshal into map of pointers to avoid copying issues
+	err = json.Unmarshal(data, &errorConfig)
 	if err != nil {
 		return err
 	}
@@ -37,20 +39,23 @@ func LoadErrorConfig(filePath string) error {
 
 func initializeErrors() {
 	ErrBadRequest = getErrorFromConfig("ErrBadRequest")
-
+	ErrNotFound = getErrorFromConfig("ErrNotFound")
 }
 
 type AppError struct {
-	Message        string `json:"message,omitempty"`
-	LogDescription []byte `json:"description,omitempty"`
-	LogStack       []byte `json:"stack,omitempty"`
-	InternalCode   int
-	ExternalCode   int
-	Meta           map[string]any
+	Message        string         `json:"message,omitempty"`
+	LogDescription []byte         `json:"description,omitempty"`
+	LogStack       []byte         `json:"stack,omitempty"`
+	InternalCode   int            `json:"internal_code,omitempty"`
+	ExternalCode   int            `json:"external_code,omitempty"`
+	Meta           map[string]any `json:"meta,omitempty"`
 }
 
-// Error implements the error interface.
+// Error implements the error interface. nil-safe.
 func (e *AppError) Error() string {
+	if e == nil {
+		return "<nil AppError>"
+	}
 	var buffer bytes.Buffer
 	buffer.Grow(200)
 	buffer.WriteString("Error: ")
@@ -66,15 +71,7 @@ func (e *AppError) Error() string {
 	return buffer.String()
 }
 
-// // AddStack sets the stack trace on the AppError instance and returns it.
-// // This can be useful for providing additional context when an error occurs.
-// func (e *AppError) AddStack() *AppError {
-// 	e.Stack = Callers().Export()
-// 	return e
-// }
-
-// AddDescription sets the description field of the AppError instance and returns it.
-// This can be useful for providing additional context when an error occurs.
+// AddDescription / OverwriteDescription
 func (e *AppError) OverwriteDescription(description []byte) *AppError {
 	e.LogDescription = description
 	return e
@@ -100,21 +97,40 @@ func (e *AppError) AddMeta(key string, value any) *AppError {
 	return e
 }
 
+// NewAppError creates an AppError; status is used as ExternalCode.
 func NewAppError(status int, message string, description interface{}) *AppError {
+	var descBytes []byte
+	switch v := description.(type) {
+	case nil:
+		// nothing
+	case string:
+		descBytes = []byte(v)
+	case []byte:
+		descBytes = v
+	default:
+		// try to JSON-encode other types
+		if b, err := json.Marshal(v); err == nil {
+			descBytes = b
+		}
+	}
 	return &AppError{
-
-		Message: message,
+		Message:        message,
+		ExternalCode:   status,
+		LogDescription: descBytes,
 	}
 }
 
 func getErrorFromConfig(key string) *AppError {
-	if err, exists := errorConfig[key]; exists {
-
-		err.LogDescription = err.LogDescription
-		return &err
+	if errorConfig == nil {
+		return &AppError{
+			ExternalCode: 500,
+			Message:      "error config not loaded",
+		}
+	}
+	if errPtr, exists := errorConfig[key]; exists && errPtr != nil {
+		return errPtr
 	}
 	return &AppError{
-
 		ExternalCode: 500,
 		Message:      "Unknown error",
 	}

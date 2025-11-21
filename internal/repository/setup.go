@@ -49,7 +49,7 @@ func NewServiceRepository(config config.App) *serviceRepository {
 	db, err = SetupDB(databaseConfig)
 	if err != nil {
 
-		pkg.GetLogger().Error("Error initializing DB", "error", err.Error())
+		fmt.Printf("Error initializing DB", "error", err.Error())
 	} // Ensure DB instance is initialized
 
 	return &serviceRepository{config: config}
@@ -184,22 +184,27 @@ func GetDB() (*sql.DB, error) {
 // For example, it handles duplicate entry errors, foreign key violations, and other MySQL errors.
 // If the error is not a MySQL error, it checks if the error message is "record not found" and returns a NotFoundRepositoryMessage.
 // For any other errors, it returns an InternalServerErrorRepositoryMessage.
-func (r *serviceRepository) handleMysqlErrors(err error) *pkg.ErrorWithCode {
+func (r *serviceRepository) handleMysqlErrors(err error) *pkg.AppError {
 	if mysqlErr, ok := err.(*mySqlDriver.MySQLError); ok {
 		// Handle duplicate entry error (Error 1062)
 		if mysqlErr.Number == 1062 {
-			return pkg.ErrDuplicateEntry.AddStack().AddDescription(mysqlErr.Error())
+			// return pkg.ErrDuplicateEntry.AddStack().AddDescription(mysqlErr.Error())
+			return pkg.ErrBadRequest
 		} else if (mysqlErr.Number == 1451) || (mysqlErr.Number == 1452) {
-			return pkg.ErrForeignKeyViolation.AddStack().AddDescription(mysqlErr.Error())
+			// return pkg.ErrForeignKeyViolation.AddStack().AddDescription(mysqlErr.Error())
+			return pkg.ErrBadRequest
 		} else {
 			// Handle other MySQL errors
-			return pkg.ErrInternalServerError.AddStack().AddDescription(mysqlErr.Error())
+			// return pkg.ErrInternalServerError.AddStack().AddDescription(mysqlErr.Error())
+			return pkg.ErrBadRequest
 		}
 	} else if err.Error() == "record not found" {
-		return pkg.ErrRecordNotFound.AddStack().AddDescription(err.Error())
+		// return pkg.ErrRecordNotFound.AddStack().AddDescription(err.Error())
+		return pkg.ErrBadRequest
 	} else {
 		// Handle other errors
-		return pkg.ErrInternalServerError.AddStack().AddDescription(err.Error())
+		// return pkg.ErrInternalServerError.AddStack().AddDescription(err.Error())
+		return pkg.ErrBadRequest
 	}
 }
 
@@ -231,12 +236,15 @@ func (l *CustomGormLogger) Trace(ctx context.Context, begin time.Time, fc func()
 	}, err)
 }
 
-func (r *serviceRepository) handleDBErrors(err error) *pkg.ErrorWithCode {
+func (r *serviceRepository) handleDBErrors(err error) *pkg.AppError {
 	if err == nil {
 		return nil
 	} else if err.Error() == "record not found" {
-		return pkg.ErrRecordNotFound.AddStack().AddDescription(err.Error())
+		// return pkg.ErrRecordNotFound.AddStack().AddDescription(err.Error())
+		return pkg.ErrBadRequest
 	} else {
-		return pkg.ErrInternalServerError.AddStack().AddDescription(err.Error())
+		// return pkg.ErrInternalServerError.AddStack().AddDescription(err.Error())
+		return pkg.ErrBadRequest
+
 	}
 }

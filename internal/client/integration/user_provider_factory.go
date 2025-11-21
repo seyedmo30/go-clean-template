@@ -1,8 +1,6 @@
 package integration
 
 import (
-	"fmt"
-
 	"__MODULE__/internal/config"
 	"__MODULE__/internal/interfaces"
 	"__MODULE__/pkg"
@@ -43,7 +41,8 @@ func NewUserProviderService(cfg config.App) *userProviderService {
 func (u *userProviderService) RegisterNewProvider(id string, providerName string, providerConfig string) error {
 	factory, ok := userRegistry[providerName]
 	if !ok {
-		return pkg.ErrProviderRegistration.AddDescription(fmt.Sprintf("unrecognized user provider: %s", providerName))
+		// return pkg.ErrProviderRegistration.AddDescription(fmt.Sprintf("unrecognized user provider: %s", providerName))
+		return pkg.ErrBadRequest
 	}
 	svc, err := factory(u.config, providerConfig)
 	if err != nil {
@@ -57,7 +56,8 @@ func (u *userProviderService) RegisterNewProvider(id string, providerName string
 func (u *userProviderService) GetUserService(id string) (interfaces.UserService, error) {
 	svc, ok := u.UserServiceMap[id]
 	if !ok {
-		return nil, pkg.ErrBankServiceNotActive.AddStack() // reuse existing error or define a new one
+		// return nil, pkg.ErrBankServiceNotActive.AddStack() // reuse existing error or define a new one
+		return nil, pkg.ErrBadRequest
 	}
 	return svc, nil
 }
