@@ -26,7 +26,7 @@ func (m *MockRepository) CreateUser(ctx context.Context, params repository.Creat
 }
 
 func (m *MockRepository) GetUsersList(ctx context.Context, params repository.ListRepositoryRequestDTO[repository.BaseUser]) (repository.ListRepositoryResponseDTO[repository.BaseUser], error) {
-	args := m.Called(ctx, mock.Anything) // use Any for complex generic param matching
+	args := m.Called(ctx, mock.Anything)
 	if res, ok := args.Get(0).(repository.ListRepositoryResponseDTO[repository.BaseUser]); ok {
 		return res, args.Error(1)
 	}
@@ -70,14 +70,13 @@ type UserUsecaseSuite struct {
 	suite.Suite
 	repo   *MockRepository
 	client *MockUserClient
-	uc     *userUsecase // we'll hold pointer to returned value
+	uc     *userUsecase
 }
 
 func (s *UserUsecaseSuite) SetupTest() {
 	s.repo = &MockRepository{}
 	s.client = &MockUserClient{}
 
-	// NewUserUsecase returns a value in your code; take address so we have pointer receiver methods
 	val := NewUserUsecase(s.repo, s.client, 2)
 	s.uc = &val
 }
@@ -120,9 +119,15 @@ func (s *UserUsecaseSuite) Test_GetUsers_ReturnsFromRepo_WhenExists() {
 	// call
 	resp, err := s.uc.GetUsers(context.Background(), 1)
 	assert.NoError(s.T(), err)
-	assert.Equal(s.T(), "db", resp.Provider)
-	assert.Len(s.T(), resp.Users, 1)
-	assert.Equal(s.T(), user.FullName("John Doe"), resp.Users[0].Name)
+	assert.Len(s.T(), resp, 1)
+
+	// check pointer fields and values
+	if assert.NotNil(s.T(), resp[0].FullName) {
+		assert.Equal(s.T(), full, *resp[0].FullName)
+	}
+	if assert.NotNil(s.T(), resp[0].ID) {
+		assert.Equal(s.T(), id, *resp[0].ID)
+	}
 
 	// ensure external client wasn't called and CreateUser didn't run
 	s.client.AssertNotCalled(s.T(), "GetUsers", mock.Anything, mock.Anything)
@@ -163,15 +168,15 @@ func (s *UserUsecaseSuite) Test_GetUsers_CallsClientAndPersists_WhenRepoEmpty() 
 	}
 	s.client.On("GetUsers", mock.Anything, 1).Return(clientResp, nil)
 
-	// expect CreateUser called twice (we don't assert exact param content, only that it's called)
+	// expect CreateUser called twice
 	s.repo.On("CreateUser", mock.Anything, mock.Anything).Return(nil).Times(2)
 
 	// call
 	resp, err := s.uc.GetUsers(context.Background(), 1)
 	assert.NoError(s.T(), err)
-	assert.Equal(s.T(), "jsonplaceholder", resp.Provider)
-	assert.Len(s.T(), resp.Users, 2)
+	assert.Len(s.T(), resp, 2)
 
+	// verify CreateUser called twice
 	s.repo.AssertNumberOfCalls(s.T(), "CreateUser", 2)
 	s.repo.AssertExpectations(s.T())
 	s.client.AssertExpectations(s.T())
@@ -182,7 +187,7 @@ func (s *UserUsecaseSuite) Test_GetUsers_ReturnsError_WhenRepoFails() {
 
 	resp, err := s.uc.GetUsers(context.Background(), 1)
 	assert.Error(s.T(), err)
-	assert.Equal(s.T(), integration.UserListResponseDTO{}, resp)
+	assert.Empty(s.T(), resp)
 	s.repo.AssertExpectations(s.T())
 }
 
@@ -195,7 +200,7 @@ func (s *UserUsecaseSuite) Test_GetUsers_ReturnsError_WhenClientFails() {
 
 	resp, err := s.uc.GetUsers(context.Background(), 1)
 	assert.Error(s.T(), err)
-	assert.Equal(s.T(), integration.UserListResponseDTO{}, resp)
+	assert.Empty(s.T(), resp)
 
 	s.client.AssertExpectations(s.T())
 	s.repo.AssertExpectations(s.T())
@@ -224,7 +229,7 @@ func (s *UserUsecaseSuite) Test_GetUsers_ReturnsError_WhenCreateUserFails() {
 
 	resp, err := s.uc.GetUsers(context.Background(), 1)
 	assert.Error(s.T(), err)
-	assert.Equal(s.T(), integration.UserListResponseDTO{}, resp)
+	assert.Empty(s.T(), resp)
 
 	s.repo.AssertExpectations(s.T())
 	s.client.AssertExpectations(s.T())

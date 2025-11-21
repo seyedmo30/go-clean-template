@@ -52,7 +52,7 @@ var serveCmd = &cobra.Command{
 			os.Exit(1)
 		}
 
-		userUsecase := usecase.NewUserUsecase(rp, userSvc, 1)
+		userUsecase := usecase.NewUserUsecase(rp, userSvc, 50)
 
 		worker.NewWorker(userUsecase, conf.WorkerConfig).Start()
 
