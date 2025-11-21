@@ -9,6 +9,7 @@ import (
 	"syscall"
 
 	"github.com/labstack/echo/v4"
+	"github.com/labstack/gommon/log"
 
 	"__MODULE__/internal/adapter/http"
 	"__MODULE__/internal/client/integration"
@@ -26,16 +27,16 @@ var serveCmd = &cobra.Command{
 	Use:   "serve",
 	Short: "start the server",
 	Run: func(_ *cobra.Command, _ []string) {
-		logger.Info("starting the server")
+		log.Info("starting the server")
 		rp := repository.NewServiceRepository(conf)
 		// dbConn, err := repository.GetDB()
 		// if err != nil {
-		// 	logger.Error("failed to connect to the database: " + err.Error())
+		// 	log.Error("failed to connect to the database: " + err.Error())
 		// 	os.Exit(1)
 		// }
 		// settingService, err := config.NewSettingsService(dbConn, conf.SettingsTTL)
 		// if err != nil {
-		// 	logger.Error("failed to create settings service: " + err.Error())
+		// 	log.Error("failed to create settings service: " + err.Error())
 		// 	os.Exit(1)
 		// }
 		// fmt.Println(settingService)
@@ -43,12 +44,12 @@ var serveCmd = &cobra.Command{
 
 		err := pr.RegisterNewProvider(integration.JsonPlaceholderProvider, integration.JsonPlaceholderProvider, "")
 		if err != nil {
-			logger.Error("failed to get RegisterNewProvider: " + err.Error())
+			log.Error("failed to get RegisterNewProvider: " + err.Error())
 			os.Exit(1)
 		}
 		userSvc, err := pr.GetUserService(integration.JsonPlaceholderProvider)
 		if err != nil {
-			logger.Error("failed to get user provider instance: " + err.Error())
+			log.Error("failed to get user provider instance: " + err.Error())
 			os.Exit(1)
 		}
 
@@ -66,20 +67,20 @@ var serveCmd = &cobra.Command{
 		serverErrCh := make(chan error, 1)
 		go func() {
 			addr := ":" + "8009"
-			logger.Info("http server starting", "addr", addr)
+			log.Info("http server starting", "addr", addr)
 			if err := e.Start(addr); err != nil && err != echo.ErrInternalServerError {
 				serverErrCh <- err
 			}
 			serverErrCh <- nil
 		}()
 
-		logger.Info("shutdown complete")
+		log.Info("shutdown complete")
 
 		var gracefulStop = make(chan os.Signal, 1)
 		signal.Notify(gracefulStop, syscall.SIGTERM)
 		signal.Notify(gracefulStop, syscall.SIGINT)
 		sig := <-gracefulStop
-		logger.Info("shutdown commencing...", "signal", sig)
+		log.Info("shutdown commencing...", "signal", sig)
 	},
 }
 
