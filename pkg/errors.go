@@ -43,12 +43,12 @@ func initializeErrors() {
 }
 
 type AppError struct {
-	Message        string         `json:"message,omitempty"`
-	LogDescription []byte         `json:"description,omitempty"`
-	LogStack       []byte         `json:"stack,omitempty"`
-	InternalCode   int            `json:"internal_code,omitempty"`
-	ExternalCode   int            `json:"external_code,omitempty"`
-	Meta           map[string]any `json:"meta,omitempty"`
+	message        string         `json:"message,omitempty"`
+	logDescription []byte         `json:"description,omitempty"`
+	logStack       []byte         `json:"stack,omitempty"`
+	internalCode   int            `json:"internal_code,omitempty"`
+	externalCode   int            `json:"external_code,omitempty"`
+	meta           map[string]any `json:"meta,omitempty"`
 }
 
 // Error implements the error interface. nil-safe.
@@ -59,43 +59,51 @@ func (e *AppError) Error() string {
 	var buffer bytes.Buffer
 	buffer.Grow(200)
 	buffer.WriteString("Error: ")
-	buffer.WriteString(e.Message)
+	buffer.WriteString(e.message)
 	buffer.WriteString(", InternalCode Code: ")
-	buffer.WriteString(strconv.Itoa(e.InternalCode))
+	buffer.WriteString(strconv.Itoa(e.internalCode))
 	buffer.WriteString(", ExternalCode Code: ")
-	buffer.WriteString(strconv.Itoa(e.ExternalCode))
+	buffer.WriteString(strconv.Itoa(e.externalCode))
 	buffer.WriteString(", LogDescription Code: ")
-	buffer.Write(e.LogDescription)
+	buffer.Write(e.logDescription)
 	buffer.WriteString(", LogStack Code: ")
-	buffer.Write(e.LogStack)
+	buffer.Write(e.logStack)
 	return buffer.String()
 }
 
 // AddDescription / OverwriteDescription
 func (e *AppError) OverwriteDescription(description []byte) *AppError {
-	e.LogDescription = description
+	e.logDescription = description
 	return e
 }
 func (e *AppError) AddDescription(description []byte) *AppError {
-	e.LogDescription = append(e.LogDescription, description...)
+	e.logDescription = append(e.logDescription, description...)
 	return e
 }
 func (e *AppError) OverwriteInternalCode(code int) *AppError {
-	e.InternalCode = code
+	e.internalCode = code
 	return e
 }
 func (e *AppError) OverwriteExternalCode(code int) *AppError {
-	e.ExternalCode = code
+	e.externalCode = code
 	return e
 }
 
 func (e *AppError) AddMeta(key string, value any) *AppError {
-	if len(e.Meta) == 0 {
-		e.Meta = make(map[string]any, 5)
+	if len(e.meta) == 0 {
+		e.meta = make(map[string]any, 5)
 	}
-	e.Meta[key] = value
+	e.meta[key] = value
 	return e
 }
+
+func (e *AppError) AppendStackLog() *AppError {
+// TODO
+// must stack from run time get ,  and just 1 dept , for example evry where that AppendStackLog call , add same line
+
+	return e
+}
+
 
 // NewAppError creates an AppError; status is used as ExternalCode.
 func NewAppError(status int, message string, description interface{}) *AppError {
@@ -114,24 +122,24 @@ func NewAppError(status int, message string, description interface{}) *AppError 
 		}
 	}
 	return &AppError{
-		Message:        message,
-		ExternalCode:   status,
-		LogDescription: descBytes,
+		message:        message,
+		externalCode:   status,
+		logDescription: descBytes,
 	}
 }
 
 func getErrorFromConfig(key string) *AppError {
 	if errorConfig == nil {
 		return &AppError{
-			ExternalCode: 500,
-			Message:      "error config not loaded",
+			externalCode: 500,
+			message:      "error config not loaded",
 		}
 	}
 	if errPtr, exists := errorConfig[key]; exists && errPtr != nil {
 		return errPtr
 	}
 	return &AppError{
-		ExternalCode: 500,
-		Message:      "Unknown error",
+		externalCode: 500,
+		message:      "Unknown error",
 	}
 }
