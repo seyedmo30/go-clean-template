@@ -4,7 +4,9 @@ import (
 	"bytes"
 	"encoding/json"
 	"os"
+	"runtime"
 	"strconv"
+	"strings"
 )
 
 func init() {
@@ -51,6 +53,47 @@ type AppError struct {
 	meta           map[string]any `json:"meta,omitempty"`
 }
 
+
+func getErrorFromConfig(key string) *AppError {
+	if errorConfig == nil {
+		return &AppError{
+			externalCode: 500,
+			message:      "error config not loaded",
+		}
+	}
+	if errPtr, exists := errorConfig[key]; exists && errPtr != nil {
+		return errPtr
+	}
+	return &AppError{
+		externalCode: 500,
+		message:      "Unknown error",
+	}
+}
+
+// NewAppError creates an AppError; status is used as ExternalCode.
+func NewAppError(status int, message string, description interface{}) *AppError {
+	var descBytes []byte
+	switch v := description.(type) {
+	case nil:
+		// nothing
+	case string:
+		descBytes = []byte(v)
+	case []byte:
+		descBytes = v
+	default:
+		// try to JSON-encode other types
+		if b, err := json.Marshal(v); err == nil {
+			descBytes = b
+		}
+	}
+	return &AppError{
+		message:        message,
+		externalCode:   status,
+		logDescription: descBytes,
+	}
+}
+
+
 // Error implements the error interface. nil-safe.
 func (e *AppError) Error() string {
 	if e == nil {
@@ -70,6 +113,7 @@ func (e *AppError) Error() string {
 	buffer.Write(e.logStack)
 	return buffer.String()
 }
+
 
 // AddDescription / OverwriteDescription
 func (e *AppError) OverwriteDescription(description []byte) *AppError {
@@ -97,49 +141,108 @@ func (e *AppError) AddMeta(key string, value any) *AppError {
 	return e
 }
 
-func (e *AppError) AppendStackLog() *AppError {
-// TODO
-// must stack from run time get ,  and just 1 dept , for example evry where that AppendStackLog call , add same line
+// Getters (nil-safe). For slices/maps we return copies to avoid accidental
+// external mutation of internal state and to be safe for concurrent readers.
 
+// Message returns the error message.
+func (e *AppError) Message() string {
+	if e == nil {
+		return ""
+	}
+	return e.message
+}
+
+// Description returns a copy of the log description bytes (or nil).
+func (e *AppError) Description() []byte {
+	if e == nil || len(e.logDescription) == 0 {
+		return nil
+	}
+	b := make([]byte, len(e.logDescription))
+	copy(b, e.logDescription)
+	return b
+}
+
+// Stack returns a copy of the stored stack log bytes (or nil).
+func (e *AppError) Stack() []byte {
+	if e == nil || len(e.logStack) == 0 {
+		return nil
+	}
+	b := make([]byte, len(e.logStack))
+	copy(b, e.logStack)
+	return b
+}
+
+// InternalCode returns the internal code.
+func (e *AppError) InternalCode() int {
+	if e == nil {
+		return 0
+	}
+	return e.internalCode
+}
+
+// ExternalCode returns the external (status) code.
+func (e *AppError) ExternalCode() int {
+	if e == nil {
+		return 0
+	}
+	return e.externalCode
+}
+
+// Meta returns a shallow copy of the meta map (or nil).
+func (e *AppError) Meta() map[string]any {
+	if e == nil || len(e.meta) == 0 {
+		return nil
+	}
+	m := make(map[string]any, len(e.meta))
+	for k, v := range e.meta {
+		m[k] = v
+	}
+	return m
+}
+
+// GetMeta retrieves a single meta value by key.
+func (e *AppError) GetMeta(key string) (any, bool) {
+	if e == nil {
+		return nil, false
+	}
+	v, ok := e.meta[key]
+	return v, ok
+}
+
+
+
+
+func (e *AppError) AppendStackLog() *AppError {
+	if e == nil {
+		return e
+	}
+	pc, file, line, ok := runtime.Caller(1)
+	var entry []byte
+	if ok {
+		// find last path separator ('/' or '\') and slice base name
+		idx := strings.LastIndexAny(file, "/\\")
+		base := file
+		if idx != -1 {
+			base = file[idx+1:]
+		}
+
+		entry = append(entry, base...)
+		entry = append(entry, ':')
+		entry = strconv.AppendInt(entry, int64(line), 10)
+		entry = append(entry, ' ')
+		if fn := runtime.FuncForPC(pc); fn != nil {
+			entry = append(entry, fn.Name()...)
+		} else {
+			entry = append(entry, "unknown"...)
+		}
+	} else {
+		entry = append(entry, "unknown"...)
+	}
+
+	if len(e.logStack) > 0 {
+		e.logStack = append(e.logStack, '\n')
+	}
+	e.logStack = append(e.logStack, entry...)
 	return e
 }
 
-
-// NewAppError creates an AppError; status is used as ExternalCode.
-func NewAppError(status int, message string, description interface{}) *AppError {
-	var descBytes []byte
-	switch v := description.(type) {
-	case nil:
-		// nothing
-	case string:
-		descBytes = []byte(v)
-	case []byte:
-		descBytes = v
-	default:
-		// try to JSON-encode other types
-		if b, err := json.Marshal(v); err == nil {
-			descBytes = b
-		}
-	}
-	return &AppError{
-		message:        message,
-		externalCode:   status,
-		logDescription: descBytes,
-	}
-}
-
-func getErrorFromConfig(key string) *AppError {
-	if errorConfig == nil {
-		return &AppError{
-			externalCode: 500,
-			message:      "error config not loaded",
-		}
-	}
-	if errPtr, exists := errorConfig[key]; exists && errPtr != nil {
-		return errPtr
-	}
-	return &AppError{
-		externalCode: 500,
-		message:      "Unknown error",
-	}
-}

@@ -12,7 +12,7 @@ import (
 // 1) query DB
 // 2) if DB has rows -> map to usecase.BaseUser and return
 // 3) otherwise call client, persist each user, and return mapped usecase.BaseUser list
-func (u *userUsecase) GetUsers(ctx context.Context, page int) ([]usecase.BaseUser, error) {
+func (u *userUsecase) GetUsers(ctx context.Context, page int) (res []usecase.BaseUser,err error) {
 	if page <= 0 {
 		page = 1
 	}
@@ -42,7 +42,7 @@ func (u *userUsecase) GetUsers(ctx context.Context, page int) ([]usecase.BaseUse
 	// 2) query client
 	clientResp, err := u.client.GetUsers(ctx, page)
 	if err != nil {
-		return nil, fmt.Errorf("client.GetUsers: %w", err)
+		return 
 	}
 
 	

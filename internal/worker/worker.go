@@ -60,7 +60,7 @@ func (w *worker) registerJobs(ctx context.Context, schedule string, jobFunc jobF
 
 			if err := jobFunc(ctx); err != nil {
 				var errorWithCode *pkg.AppError
-				if errors.As(err, &errorWithCode) && errorWithCode.InternalCode != http.StatusNotFound {
+				if errors.As(err, &errorWithCode) && errorWithCode.InternalCode() != http.StatusNotFound {
 					log.Error("Error executing task", "error", err.Error())
 				}
 			}
@@ -77,7 +77,7 @@ func (w *worker) registerJobs(ctx context.Context, schedule string, jobFunc jobF
 			}()
 			if err := jobFunc(ctx); err != nil {
 				var errorWithCode *pkg.AppError
-				if errors.As(err, &errorWithCode) && errorWithCode.InternalCode != http.StatusNotFound {
+				if errors.As(err, &errorWithCode) && errorWithCode.InternalCode() != http.StatusNotFound {
 					log.Error("Error executing task", "error", err.Error())
 				}
 			}
