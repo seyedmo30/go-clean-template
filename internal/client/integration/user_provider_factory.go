@@ -42,7 +42,7 @@ func (u *userProviderService) RegisterNewProvider(id string, providerName string
 	factory, ok := userRegistry[providerName]
 	if !ok {
 		// return pkg.ErrProviderRegistration.AddDescription(fmt.Sprintf("unrecognized user provider: %s", providerName))
-		return pkg.ErrBadRequest
+		return pkg.NewAppError(pkg.ErrBadRequest)
 	}
 	svc, err := factory(u.config, providerConfig)
 	if err != nil {
@@ -57,7 +57,7 @@ func (u *userProviderService) GetUserService(id string) (interfaces.UserService,
 	svc, ok := u.UserServiceMap[id]
 	if !ok {
 		// return nil, pkg.ErrBankServiceNotActive.AddStack() // reuse existing error or define a new one
-		return nil, pkg.ErrBadRequest
+		return nil, pkg.NewAppError(pkg.ErrBadRequest)
 	}
 	return svc, nil
 }

@@ -189,22 +189,22 @@ func (r *serviceRepository) handleMysqlErrors(err error) *pkg.AppError {
 		// Handle duplicate entry error (Error 1062)
 		if mysqlErr.Number == 1062 {
 			// return pkg.ErrDuplicateEntry.AddStack().AddDescription(mysqlErr.Error())
-			return pkg.ErrBadRequest
+			return pkg.NewAppError(pkg.ErrBadRequest)
 		} else if (mysqlErr.Number == 1451) || (mysqlErr.Number == 1452) {
 			// return pkg.ErrForeignKeyViolation.AddStack().AddDescription(mysqlErr.Error())
-			return pkg.ErrBadRequest
+			return pkg.NewAppError(pkg.ErrBadRequest)
 		} else {
 			// Handle other MySQL errors
 			// return pkg.ErrInternalServerError.AddStack().AddDescription(mysqlErr.Error())
-			return pkg.ErrBadRequest
+			return pkg.NewAppError(pkg.ErrBadRequest)
 		}
 	} else if err.Error() == "record not found" {
 		// return pkg.ErrRecordNotFound.AddStack().AddDescription(err.Error())
-		return pkg.ErrBadRequest
+		return pkg.NewAppError(pkg.ErrBadRequest)
 	} else {
 		// Handle other errors
 		// return pkg.ErrInternalServerError.AddStack().AddDescription(err.Error())
-		return pkg.ErrBadRequest
+		return pkg.NewAppError(pkg.ErrBadRequest)
 	}
 }
 
@@ -241,10 +241,10 @@ func (r *serviceRepository) handleDBErrors(err error) *pkg.AppError {
 		return nil
 	} else if err.Error() == "record not found" {
 		// return pkg.ErrRecordNotFound.AddStack().AddDescription(err.Error())
-		return pkg.ErrBadRequest
+		return pkg.NewAppError(pkg.ErrBadRequest)
 	} else {
 		// return pkg.ErrInternalServerError.AddStack().AddDescription(err.Error())
-		return pkg.ErrBadRequest
+		return pkg.NewAppError(pkg.ErrBadRequest)
 
 	}
 }

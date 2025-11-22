@@ -12,6 +12,7 @@ import (
 	"__MODULE__/internal/dto/client/integration"
 	"__MODULE__/internal/entity/user"
 	"__MODULE__/internal/interfaces"
+	"__MODULE__/pkg"
 )
 
 const JsonPlaceholderProvider = "jsonplaceholder"
@@ -32,7 +33,7 @@ func init() {
 	})
 }
 
-func (j *jsonPlaceholderService) GetUsers(ctx context.Context, page int) (integration.UserListResponseDTO, error) {
+func (j *jsonPlaceholderService) GetUsers(ctx context.Context, page int) (res integration.UserListResponseDTO, err error) {
 	u := fmt.Sprintf("%s/users", j.baseURL)
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, u, nil)
 	if err != nil {
@@ -48,7 +49,11 @@ func (j *jsonPlaceholderService) GetUsers(ctx context.Context, page int) (integr
 
 	body, _ := io.ReadAll(resp.Body)
 	if resp.StatusCode != http.StatusOK {
-		return integration.UserListResponseDTO{Provider: j.provider, Raw: body}, fmt.Errorf("jsonplaceholder: status %d", resp.StatusCode)
+		str := "status code response is not 200 ."
+		str = str + " resp.StatusCode : " + strconv.Itoa(resp.StatusCode)
+		str = str + string(body)
+		err = pkg.NewAppError(pkg.ErrBadRequest).AddDescription([]byte(str)).AppendStackLog()
+		return res, err
 	}
 
 	var parsed []jpUser
