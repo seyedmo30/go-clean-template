@@ -7,6 +7,8 @@ import (
 	"runtime"
 	"strconv"
 	"strings"
+
+	"github.com/sirupsen/logrus"
 )
 
 func init() {
@@ -70,6 +72,7 @@ func LoadErrorConfig(filePath string) error {
 		InternalCode int             `json:"internal_code,omitempty"`
 		ExternalCode int             `json:"external_code,omitempty"`
 		Meta         map[string]any  `json:"meta,omitempty"`
+		Level        string          `json:"level,omitempty"`
 	}
 
 	var raw map[string]appErrorRaw
@@ -144,6 +147,7 @@ type AppError struct {
 	message        string         `json:"message,omitempty"`
 	logDescription []byte         `json:"description,omitempty"`
 	logStack       []byte         `json:"stack,omitempty"`
+	logLevel       logrus.Level   `json:"level,omitempty"`
 	internalCode   int            `json:"internal_code,omitempty"`
 	externalCode   int            `json:"external_code,omitempty"`
 	meta           map[string]any `json:"meta,omitempty"`
@@ -174,6 +178,13 @@ func (e *AppError) OverwriteDescription(description []byte) *AppError {
 	e.logDescription = description
 	return e
 }
+
+// AddDescription / OverwriteDescription
+func (e *AppError) OverwriteLevel(level logrus.Level) *AppError {
+	e.logLevel = level
+	return e
+}
+
 func (e *AppError) AddDescription(description []byte) *AppError {
 	e.logDescription = append(e.logDescription, description...)
 	return e
@@ -216,6 +227,14 @@ func (e *AppError) Description() []byte {
 	return b
 }
 
+// Description returns a copy of the log description bytes (or nil).
+func (e *AppError) DescriptionStr() string {
+	if e == nil || len(e.logDescription) == 0 {
+		return ""
+	}
+	return string(e.logDescription)
+}
+
 // Stack returns a copy of the stored stack log bytes (or nil).
 func (e *AppError) Stack() []byte {
 	if e == nil || len(e.logStack) == 0 {
@@ -226,12 +245,45 @@ func (e *AppError) Stack() []byte {
 	return b
 }
 
+// Stack returns a copy of the stored stack log bytes (or nil).
+func (e *AppError) StackStr() string {
+	if e == nil || len(e.logStack) == 0 {
+		return ""
+	}
+	return string(e.logStack)
+}
+
+// Stack returns a copy of the stored stack log bytes (or nil).
+func (e *AppError) LevelStr() string {
+	if e == nil {
+		return ""
+	}
+	return e.logLevel.String()
+}
+
+// Stack returns a copy of the stored stack log bytes (or nil).
+func (e *AppError) Level() logrus.Level {
+	if e.logLevel != 0 {
+		return e.logLevel
+	} else {
+		return logrus.ErrorLevel
+	}
+}
+
 // InternalCode returns the internal code.
 func (e *AppError) InternalCode() int {
 	if e == nil {
 		return 0
 	}
 	return e.internalCode
+}
+
+// InternalCode returns the internal code.
+func (e *AppError) InternalCodeStr() string {
+	if e == nil {
+		return "0"
+	}
+	return strconv.Itoa(e.internalCode)
 }
 
 // ExternalCode returns the external (status) code.
@@ -263,11 +315,15 @@ func (e *AppError) GetMeta(key string) (any, bool) {
 	return v, ok
 }
 
-func (e *AppError) AppendStackLog() *AppError {
+func (e *AppError) AppendStackLog(depth ...int) *AppError {
 	if e == nil {
 		return e
 	}
-	pc, file, line, ok := runtime.Caller(1)
+	d := 1
+	if len(depth) > 0 && depth[0] > 0 {
+		d = depth[0]
+	}
+	pc, file, line, ok := runtime.Caller(d)
 	var entry []byte
 	if ok {
 		// find last path separator ('/' or '\') and slice base name
@@ -291,7 +347,7 @@ func (e *AppError) AppendStackLog() *AppError {
 	}
 
 	if len(e.logStack) > 0 {
-		e.logStack = append(e.logStack, '\n')
+		e.logStack = append(e.logStack, ' ')
 	}
 	e.logStack = append(e.logStack, entry...)
 	return e

@@ -64,10 +64,8 @@ func (h *UserHandler) GetUsers(c echo.Context) error {
 	// call usecase
 	users, err := h.usecase.GetUsers(c.Request().Context(), page)
 	if err != nil {
-		// map to 500 for unexpected errors; you can inspect/errors types and return 4xx as needed
-		return c.JSON(http.StatusInternalServerError, map[string]string{"error": err.Error()})
+		return handleUsecaseError(c, err)
 	}
-
 	// map to HTTP DTOs
 	resp := UsersResponse{Users: make([]UserResponse, 0, len(users))}
 	for _, u := range users {

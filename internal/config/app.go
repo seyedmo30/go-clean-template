@@ -15,7 +15,7 @@ type App struct {
 
 type AppConfig struct {
 	// required environment variable
-	AppEnv string `env:"APP_ENV,required"`
+	AppEnv string `env:"APP_ENV"  envDefault:"development"`
 	// default value 30s if not set
 	SettingsTTL string `envDefault:"30s" env:"SETTINGS_TTL"`
 }
@@ -26,11 +26,11 @@ type KafkaConfig struct {
 }
 
 type DatabaseConfig struct {
-	Username string `env:"DB_USERNAME"` // add ,required if needed: env:"DB_USERNAME,required"
-	Password string `env:"DB_PASSWORD"` // probably required, add option if so
+	Username string `env:"DB_USERNAME" envDefault:"postgres"` // add ,required if needed: env:"DB_USERNAME,required"
+	Password string `env:"DB_PASSWORD" envDefault:"salam"`    // probably required, add option if so
 	Host     string `env:"DB_HOST" envDefault:"localhost"`
 	Port     string `env:"DB_PORT" envDefault:"5432"`
-	Database string `env:"DB_DATABASE" envDefault:"template_clean"`
+	Database string `env:"DB_DATABASE" envDefault:"clean_template"`
 	PoolSize int    `env:"DB_POOL_SIZE" envDefault:"10"`
 	MaxIdle  int    `env:"DB_MAX_IDLE" envDefault:"5"`
 }
@@ -45,8 +45,8 @@ type ProviderConfig struct {
 }
 
 type ReqresConfig struct {
-	BaseUrl              string `env:"REQRES_BASE_URL,required"`
-	AuthenticationUrl    string `env:"REQRES_AUTHENTICATION_URL,required"`
+	BaseUrl              string `env:"REQRES_BASE_URL"  envDefault:"30"`
+	AuthenticationUrl    string `env:"REQRES_AUTHENTICATION_URL"  envDefault:""`
 	Timeout              int    `env:"REQRES_TIMEOUT" envDefault:"30"`
 	RetryCount           int    `env:"REQRES_RETRY_COUNT" envDefault:"0"`
 	RefreshTokenInterval int    `env:"REQRES_REFRESH_TOKEN_INTERVAL" envDefault:"600"`

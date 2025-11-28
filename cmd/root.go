@@ -5,7 +5,8 @@ import (
 
 	"__MODULE__/internal/config"
 
-	"github.com/labstack/gommon/log"
+	log "github.com/sirupsen/logrus"
+
 	"github.com/spf13/cobra"
 )
 

@@ -8,14 +8,14 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/labstack/echo/v4"
-	"github.com/labstack/gommon/log"
-
 	"__MODULE__/internal/adapter/http"
 	"__MODULE__/internal/client/integration"
 	"__MODULE__/internal/repository"
 	"__MODULE__/internal/usecase"
 	"__MODULE__/internal/worker"
+
+	"github.com/labstack/echo/v4"
+	log "github.com/sirupsen/logrus"
 
 	"github.com/spf13/cobra"
 )

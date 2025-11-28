@@ -1,6 +1,9 @@
 package pkg
 
-import "time"
+import (
+	"os"
+	"time"
+)
 
 func PtrString(s string) *string {
 	return &s
@@ -20,4 +23,12 @@ func PtrBool(b bool) *bool {
 
 func PtrTime(t time.Time) *time.Time {
 	return &t
+}
+
+func EnvOrDefault(key, def string) string {
+	val, ok := os.LookupEnv(key)
+	if !ok || val == "" {
+		return def
+	}
+	return val
 }

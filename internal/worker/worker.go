@@ -9,8 +9,8 @@ import (
 	"__MODULE__/internal/interfaces"
 	"__MODULE__/pkg"
 
-	"github.com/labstack/gommon/log"
 	"github.com/robfig/cron/v3"
+	log "github.com/sirupsen/logrus"
 )
 
 type worker struct {

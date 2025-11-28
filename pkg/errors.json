@@ -3,6 +3,7 @@
     "message": "Bad request",
     "internal_code": 1001,
     "external_code": 400,
+    "level" :"warning",
     "meta": {
       "reason": "validation",
       "field_example": "username"
