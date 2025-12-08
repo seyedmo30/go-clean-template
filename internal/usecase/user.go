@@ -1,11 +1,14 @@
 package usecase
 
 import (
+	"__MODULE__/internal/dto/mapper"
 	"__MODULE__/internal/dto/repository"
 	"__MODULE__/internal/dto/usecase"
+	entity "__MODULE__/internal/entity/user"
 	"context"
 	"fmt"
-	"time"
+
+	"github.com/google/uuid"
 )
 
 // GetUsers implements the flow:
@@ -29,7 +32,7 @@ func (u *userUsecase) GetUsers(ctx context.Context, page int) (res []usecase.Bas
 	if err == nil && len(dbRes.List) > 0 {
 		out := make([]usecase.BaseUser, 0, len(dbRes.List))
 		for _, bu := range dbRes.List {
-			out = append(out, mapRepoBaseUserToUsecase(bu))
+			out = append(out, mapper.UserRepoToUsecase(bu))
 		}
 		return out, nil
 	}
@@ -45,14 +48,14 @@ func (u *userUsecase) GetUsers(ctx context.Context, page int) (res []usecase.Bas
 		return
 	}
 
-	// 3) persist results
-	now := time.Now()
 	for _, cu := range clientResp.Users {
+		uc := mapper.UserIntegrationToUsecase(cu)
+		ur := mapper.UserUsecaseToRepo(uc)
 		r := repository.CreateUserRepositoryRequestDTO{
-			BaseUser: mapIntegrationUserToRepo(cu, now),
+			BaseUser: ur,
 		}
 		if err := u.repo.CreateUser(ctx, r); err != nil {
-			return nil, fmt.Errorf("repository.CreateUser: %w", err)
+			return nil, err
 		}
 	}
 
@@ -62,4 +65,18 @@ func (u *userUsecase) GetUsers(ctx context.Context, page int) (res []usecase.Bas
 		out = append(out, mapIntegrationToUsecaseBaseUser(cu))
 	}
 	return out, nil
+}
+
+func (u *userUsecase) CreateUser(ctx context.Context, req usecase.CreateUserRequestDTO) (res []usecase.BaseUser, err error) {
+	uuid := entity.ID(uuid.New().String())
+
+	req.ID = &uuid
+	r := repository.CreateUserRepositoryRequestDTO{
+		BaseUser: mapper.UserUsecaseToRepo(req.BaseUser),
+	}
+	if err := u.repo.CreateUser(ctx, r); err != nil {
+		return nil, fmt.Errorf("repository.CreateUser: %w", err)
+	}
+
+	return
 }

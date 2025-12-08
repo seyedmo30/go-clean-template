@@ -3,11 +3,8 @@ package repository
 import (
 	"context"
 	"fmt"
-	"strings"
-	"unicode/utf8"
 
 	"__MODULE__/internal/dto/repository"
-	"__MODULE__/internal/entity/user"
 	"__MODULE__/pkg"
 
 	"github.com/go-sql-driver/mysql"
@@ -16,25 +13,10 @@ import (
 // The repository receiver used in your project. Replace with your actual repo type.
 // type serviceRepository struct{ /* ... */ }
 
-const maxPhoneLen = 20
-
 func (r *serviceRepository) CreateUser(ctx context.Context, params repository.CreateUserRepositoryRequestDTO) error {
-	if params.Phone != nil {
-		// convert named string type to builtin string for processing
-		phoneStr := strings.TrimSpace(string(*params.Phone))
-
-		// rune-safe truncate
-		if utf8.RuneCountInString(phoneStr) > maxPhoneLen {
-			runes := []rune(phoneStr)
-			phoneStr = string(runes[:maxPhoneLen])
-		}
-
-		// convert back to the named Phone type and write back
-		*params.Phone = user.Phone(phoneStr)
-	}
 
 	if err := db.WithContext(ctx).Table("users").Create(&params).Error; err != nil {
-		return r.handleDBErrors(err)
+		return NewAppErrorFromDBErr(err)
 	}
 	return nil
 }

@@ -13,3 +13,7 @@ type BaseUser struct {
 	Phone    *user.Phone
 	Website  *user.Website
 }
+
+type CreateUserRequestDTO struct {
+	BaseUser
+}

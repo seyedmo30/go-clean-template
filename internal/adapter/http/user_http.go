@@ -3,6 +3,7 @@ package http
 import (
 	"net/http"
 
+	adapter "__MODULE__/internal/dto/adapter/http"
 	"__MODULE__/internal/dto/usecase"
 	"__MODULE__/internal/interfaces"
 
@@ -67,6 +68,33 @@ func (h *UserHandler) GetUsers(c echo.Context) error {
 		return handleUsecaseError(c, err)
 	}
 	// map to HTTP DTOs
+	resp := UsersResponse{Users: make([]UserResponse, 0, len(users))}
+	for _, u := range users {
+		resp.Users = append(resp.Users, mapUsecaseBaseUserToHTTP(u))
+	}
+
+	return c.JSON(http.StatusOK, resp)
+}
+
+func (h *UserHandler) CreateUsers(c echo.Context) error {
+	var req adapter.CreateUserRequestDTO
+
+	if err := c.Bind(&req); err != nil {
+		return c.JSON(http.StatusBadRequest, map[string]string{"error": "invalid request"})
+	}
+	if err := c.Validate(&req); err != nil {
+
+		return c.JSON(http.StatusBadRequest, map[string]string{"error": err.Error()})
+	}
+
+	ucReq := usecase.MapCreateUser(req)
+	users, err := h.usecase.CreateUser(c.Request().Context(), ucReq)
+
+	if err != nil {
+
+		return c.JSON(http.StatusInternalServerError, map[string]string{"error": err.Error()})
+	}
+
 	resp := UsersResponse{Users: make([]UserResponse, 0, len(users))}
 	for _, u := range users {
 		resp.Users = append(resp.Users, mapUsecaseBaseUserToHTTP(u))

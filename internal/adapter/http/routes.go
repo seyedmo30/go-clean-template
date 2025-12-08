@@ -14,5 +14,6 @@ func RegisterUserRoutes(e *echo.Echo, uc interfaces.UserUsecase) {
 	g := e.Group("/users")
 	// GET /users?page=1
 	g.GET("", h.GetUsers)
+	g.POST("", h.CreateUsers)
 	// you can add other endpoints: POST /users, GET /users/:id, etc.
 }

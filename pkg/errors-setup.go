@@ -144,13 +144,12 @@ func copyAppError(src *AppError) *AppError {
 // AppError definition and methods
 
 type AppError struct {
-	message        string         `json:"message,omitempty"`
-	logDescription []byte         `json:"description,omitempty"`
-	logStack       []byte         `json:"stack,omitempty"`
-	logLevel       logrus.Level   `json:"level,omitempty"`
-	internalCode   int            `json:"internal_code,omitempty"`
-	externalCode   int            `json:"external_code,omitempty"`
-	meta           map[string]any `json:"meta,omitempty"`
+	message        string
+	logDescription []byte
+	logStack       []byte
+	internalCode   int
+	externalCode   int
+	meta           map[string]any
 }
 
 // Error implements the error interface. nil-safe.
@@ -166,10 +165,11 @@ func (e *AppError) Error() string {
 	buffer.WriteString(strconv.Itoa(e.internalCode))
 	buffer.WriteString(", ExternalCode Code: ")
 	buffer.WriteString(strconv.Itoa(e.externalCode))
-	buffer.WriteString(", LogDescription Code: ")
-	buffer.Write(e.logDescription)
-	buffer.WriteString(", LogStack Code: ")
-	buffer.Write(e.logStack)
+	// meta data must be inside of log
+	// buffer.WriteString(", LogDescription Code: ")
+	// buffer.Write(e.logDescription)
+	// buffer.WriteString(", LogStack Code: ")
+	// buffer.Write(e.logStack)
 	return buffer.String()
 }
 
@@ -353,7 +353,7 @@ func (e *AppError) AppendStackLog(depth ...int) *AppError {
 	return e
 }
 
-func CustomAppError(status int, message string, description interface{}) *AppError {
+func CustomAppError(externalCode, internalCode int, message string, description interface{}) *AppError {
 	var descBytes []byte
 	switch v := description.(type) {
 	case nil:
@@ -370,7 +370,8 @@ func CustomAppError(status int, message string, description interface{}) *AppErr
 	}
 	return &AppError{
 		message:        message,
-		externalCode:   status,
+		externalCode:   externalCode,
+		internalCode:   internalCode,
 		logDescription: descBytes,
 	}
 }
