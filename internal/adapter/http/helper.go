@@ -14,16 +14,15 @@ import (
 // - err: the error from usecase
 func handleUsecaseError(c echo.Context, err error) error {
 	// prepare base log fields
-	logData := logrus.Fields{
-		"metadata": "metadata", // keep if you always provide metadata, otherwise remove/replace
-	}
 
 	var appErr *pkg.AppError
 	if errors.As(err, &appErr) {
-		// custom AppError: include stack/desc/meta/message and use its external code
+		logData := logrus.Fields{}
 		logData["stack"] = appErr.AppendStackLog(2).StackStr()
 		logData["description"] = appErr.DescriptionStr()
-		logData["meta"] = appErr.Meta()
+		logData["metadata"] = appErr.Meta()
+		logData["internal_code"] = appErr.InternalCode()
+		logData["external_code"] = appErr.ExternalCode()
 
 		logrus.WithFields(logData).Log(appErr.Level(), appErr.Message())
 
@@ -34,6 +33,7 @@ func handleUsecaseError(c echo.Context, err error) error {
 	}
 
 	// fallback: unexpected
-	logrus.WithFields(logData).WithError(err).Error(err)
+	// TODO : append panic log
+	// logrus.WithFields(logData).WithError(err).Error(err)
 	return c.JSON(http.StatusInternalServerError, map[string]string{"error": "internal server error"})
 }

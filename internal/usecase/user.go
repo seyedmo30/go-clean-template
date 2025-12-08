@@ -49,6 +49,7 @@ func (u *userUsecase) GetUsers(ctx context.Context, page int) (res []usecase.Bas
 	}
 
 	for _, cu := range clientResp.Users {
+		UserIntegrationValidate(&cu)
 		uc := mapper.UserIntegrationToUsecase(cu)
 		ur := mapper.UserUsecaseToRepo(uc)
 		r := repository.CreateUserRepositoryRequestDTO{

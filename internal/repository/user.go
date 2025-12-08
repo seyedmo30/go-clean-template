@@ -16,7 +16,7 @@ import (
 func (r *serviceRepository) CreateUser(ctx context.Context, params repository.CreateUserRepositoryRequestDTO) error {
 
 	if err := db.WithContext(ctx).Table("users").Create(&params).Error; err != nil {
-		return NewAppErrorFromDBErr(err)
+		return NewAppErrorFromDBErr(err).AppendStackLog()
 	}
 	return nil
 }

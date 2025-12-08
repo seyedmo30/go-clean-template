@@ -150,6 +150,7 @@ type AppError struct {
 	internalCode   int
 	externalCode   int
 	meta           map[string]any
+	logLevel       logrus.Level
 }
 
 // Error implements the error interface. nil-safe.
