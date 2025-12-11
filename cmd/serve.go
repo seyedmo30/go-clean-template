@@ -62,6 +62,7 @@ var serveCmd = &cobra.Command{
 		// setup validator and routes
 		http.SetupValidator(e)
 		http.RegisterUserRoutes(e, &userUsecase)
+		http.RegisterSwagger(e)
 
 		// run echo in a goroutine so we can block on signals
 		serverErrCh := make(chan error, 1)
