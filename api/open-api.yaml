@@ -37,7 +37,6 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/GetUsersResponse"
-
 components:
   schemas:
     CreateUserRequestDTO:
@@ -81,4 +80,3 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/UserResponse"
-

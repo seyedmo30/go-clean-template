@@ -23,60 +23,55 @@ func NewUserHandler(uc interfaces.UserUsecase) *UserHandler {
 
 // GetUsers handles GET /users
 func (h *UserHandler) GetUsers(c echo.Context) error {
-	// Bind and validate
-	var req adapter.GetUsersRequest
-	// Note: Bind will decode query params into req.Page
-	if err := c.Bind(&req); err != nil {
+	var params adapter.GetUsersParams
+	if err := c.Bind(&params); err != nil {
 		return c.JSON(http.StatusBadRequest, map[string]string{"error": "invalid request"})
 	}
-	if err := c.Validate(&req); err != nil {
-		// return human-friendly validation message
+	if err := c.Validate(&params); err != nil {
 		return c.JSON(http.StatusBadRequest, map[string]string{"error": err.Error()})
 	}
 
-	// default page if not provided
-	page := req.Page
-	if page == 0 {
-		page = 1
+	page := 1
+	if params.Page != nil && *params.Page > 0 {
+		page = *params.Page
 	}
 
-	// call usecase
 	users, err := h.usecase.GetUsers(c.Request().Context(), page)
 	if err != nil {
 		return handleUsecaseError(c, err)
 	}
-	// map to HTTP DTOs
-	resp := adapter.GetUsersResponse{Users: make([]adapter.UserResponse, 0, len(users))}
+
+	usersResp := make([]adapter.UserResponse, 0, len(users))
 	for _, u := range users {
-		resp.Users = append(resp.Users, mapper.UserUsecaseToIntegration(u))
+		usersResp = append(usersResp, mapper.UserUsecaseToIntegration(u))
 	}
 
+	resp := adapter.GetUsersResponse{Users: &usersResp}
 	return c.JSON(http.StatusOK, resp)
 }
 
+// CreateUsers handles POST /users
 func (h *UserHandler) CreateUsers(c echo.Context) error {
-	var req adapter.CreateUserRequestDTO
-
-	if err := c.Bind(&req); err != nil {
+	var createReq adapter.CreateUserRequestDTO
+	if err := c.Bind(&createReq); err != nil {
 		return c.JSON(http.StatusBadRequest, map[string]string{"error": "invalid request"})
 	}
-	if err := c.Validate(&req); err != nil {
-
+	if err := c.Validate(&createReq); err != nil {
 		return c.JSON(http.StatusBadRequest, map[string]string{"error": err.Error()})
 	}
 
-	ucReq := usecase.MapCreateUser(req)
-	users, err := h.usecase.CreateUser(c.Request().Context(), ucReq)
+	baseUser := mapper.CreateUserRequestDTOToBaseUser(createReq)
+	ucReq := usecase.CreateUserRequestDTO{BaseUser: baseUser}
 
+	createdUsers, err := h.usecase.CreateUser(c.Request().Context(), ucReq)
 	if err != nil {
-
 		return c.JSON(http.StatusInternalServerError, map[string]string{"error": err.Error()})
 	}
 
-	resp := adapter.GetUsersResponse{Users: make([]adapter.UserResponse, 0, len(users))}
-	for _, u := range users {
-		resp.Users = append(resp.Users, mapper.UserUsecaseToIntegration(u))
+	createdUsersResp := make([]adapter.UserResponse, 0, len(createdUsers))
+	for _, u := range createdUsers {
+		createdUsersResp = append(createdUsersResp, mapper.UserUsecaseToIntegration(u))
 	}
 
-	return c.JSON(http.StatusOK, resp)
+	return c.JSON(http.StatusOK, createdUsersResp)
 }
