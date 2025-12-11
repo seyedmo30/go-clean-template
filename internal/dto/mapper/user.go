@@ -1,9 +1,11 @@
 package mapper
 
 import (
+	adapter "__MODULE__/internal/dto/adapter/http"
 	"__MODULE__/internal/dto/client/integration"
 	"__MODULE__/internal/dto/repository"
 	"__MODULE__/internal/dto/usecase"
+	entity "__MODULE__/internal/entity/user"
 	"strings"
 )
 
@@ -62,5 +64,26 @@ func UserIntegrationToUsecase(u integration.UserDTO) usecase.BaseUser {
 		Email:    ptrIfNotEmpty(u.Email),
 		Phone:    ptrIfNotEmpty(u.Phone),
 		Website:  ptrIfNotEmpty(u.Website),
+	}
+}
+
+// --- package-level generic helper (must NOT be a function literal) ---
+func getString[T ~string](p *T) string {
+	if p == nil {
+		return ""
+	}
+	return string(*p)
+}
+
+// UserUsecaseToIntegration uses the package-level generic helper
+func UserUsecaseToIntegration(b usecase.BaseUser) adapter.UserResponse {
+	return adapter.UserResponse{
+		ID:       entity.ID(getString(b.ID)),
+		Name:     entity.FullName(getString(b.FullName)),
+		Username: entity.Username(getString(b.Username)),
+		Email:    entity.Email(getString(b.Email)),
+		Phone:    entity.Phone(getString(b.Phone)),
+		Website:  entity.Website(getString(b.Website)),
+		Extra:    map[string]string{}, // extend when needed
 	}
 }
