@@ -29,6 +29,7 @@ require (
 	github.com/oasdiff/yaml v0.0.0-20250309154309-f31be36b4037 // indirect
 	github.com/oasdiff/yaml3 v0.0.0-20250309153720-d2182401db90 // indirect
 	github.com/perimeterx/marshmallow v1.1.5 // indirect
+	github.com/seyedmo30/go-clean-template-client v0.0.0-20251214091315-041aedb5a377 // indirect
 	github.com/speakeasy-api/jsonpath v0.6.0 // indirect
 	github.com/speakeasy-api/openapi-overlay v0.10.2 // indirect
 	github.com/vmware-labs/yaml-jsonpath v0.3.2 // indirect
