@@ -62,7 +62,7 @@ var serveCmd = &cobra.Command{
 		// setup validator and routes
 		http.SetupValidator(e)
 		http.RegisterUserRoutes(e, &userUsecase)
-		e.Static("/openapi", "assets/openapi")
+		e.Static("/openapi", "assets/clients/api")
 		e.Static("/docs", "assets/swagger")
 
 		// run echo in a goroutine so we can block on signals
