@@ -53,7 +53,7 @@ func init() {
 	}
 	logrus.SetLevel(level)
 
-	appName := EnvOrDefault("APP_NAME", "exhub")
+	appName := EnvOrDefault("APP_NAME", "__MODULE__")
 	logrus.AddHook(&AppNameHook{AppName: appName})
 	logrus.AddHook(NewMaskingHook())
 
@@ -296,7 +296,7 @@ func (h *MaskingHook) maskString(s string) string {
 }
 
 // change to your app name constant
-const appName = "exhub"
+const appName = "__MODULE__"
 
 // jsonInternalLog writes a single-line JSON log to stderr (won't trigger logrus hooks)
 func jsonInternalLog(level, msg string) {
